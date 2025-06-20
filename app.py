@@ -1,157 +1,3 @@
-# from fastapi import FastAPI, File, UploadFile, HTTPException
-# from fastapi.responses import JSONResponse
-# from fastapi.middleware.cors import CORSMiddleware
-# from contextlib import asynccontextmanager
-# import tempfile
-# import os
-# import json
-# from typing import Dict, Any
-# import logging
-# from pathlib import Path
-# from resume_parser import ResumeParser
-# from dotenv import load_dotenv
-
-# load_dotenv()
-# PORT = int(os.getenv("PORT"))
-
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     global resume_parser
-#     try:
-#         logger.info("Initializing Resume Parser...")
-#         resume_parser = ResumeParser()
-#         logger.info("Resume Parser initialized successfully!")
-#         yield
-#     except Exception as e:
-#         logger.error(f"Failed to initialize Resume Parser: {e}")
-#         raise e
-#     finally:
-#         # Optional cleanup logic
-#         logger.info("Shutting down application...")
-
-# # Initialize FastAPI app
-# app = FastAPI(
-#     title="Resume Parser API",
-#     description="API for parsing resumes and extracting structured information",
-#     version="1.0.0",
-#     lifespan=lifespan
-# )
-
-# # Add CORS middleware
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # Configure this properly for production
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
-# # Initialize the resume parser (this will load the models once at startup)
-# resume_parser = None
-
-# @app.get("/")
-# async def root():
-#     """Root endpoint with API information"""
-#     return "ResumeParser is running"
-
-# @app.post("/parse-resume")
-# async def parse_resume_endpoint(file: UploadFile = File(...)):
-#     """
-#     Parse a resume file and extract structured information
-    
-#     Accepts: PDF, DOCX, TXT files
-#     Returns: JSON with parsed resume data
-#     """
-#     if not resume_parser:
-#         raise HTTPException(status_code=500, detail="Resume parser not initialized")
-    
-#     # Validate file type
-#     allowed_extensions = {'.pdf', '.docx', '.txt'}
-#     file_extension = Path(file.filename).suffix.lower()
-    
-#     if file_extension not in allowed_extensions:
-#         raise HTTPException(
-#             status_code=400, 
-#             detail=f"Unsupported file type: {file_extension}. Allowed types: {', '.join(allowed_extensions)}"
-#         )
-    
-#     # Validate file size (e.g., 10MB limit)
-#     max_file_size = 10 * 1024 * 1024  # 10MB
-#     if file.size and file.size > max_file_size:
-#         raise HTTPException(
-#             status_code=400,
-#             detail=f"File too large. Maximum size allowed: {max_file_size // (1024*1024)}MB"
-#         )
-    
-#     try:
-#         # Create a temporary file to save the uploaded file
-#         with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
-#             # Read and save the uploaded file
-#             content = await file.read()
-#             temp_file.write(content)
-#             temp_file_path = temp_file.name
-        
-#         logger.info(f"Processing file: {file.filename} (size: {len(content)} bytes)")
-        
-#         # Parse the resume
-#         result = resume_parser.parse_resume(temp_file_path)
-        
-#         # Clean up the temporary file
-#         os.unlink(temp_file_path)
-        
-#         # Check if parsing was successful
-#         if "error" in result:
-#             raise HTTPException(status_code=422, detail=result["error"])
-        
-#         logger.info(f"Successfully parsed resume: {file.filename}")
-        
-#         return JSONResponse(content={"data": result})
-        
-#     except HTTPException:
-#         # Re-raise HTTP exceptions
-#         raise
-#     except Exception as e:
-#         # Clean up temp file if it exists
-#         try:
-#             if 'temp_file_path' in locals():
-#                 os.unlink(temp_file_path)
-#         except:
-#             pass
-        
-#         logger.error(f"Error parsing resume {file.filename}: {str(e)}")
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Error processing resume: {str(e)}"
-#         )
-
-# @app.exception_handler(413)
-# async def request_entity_too_large_handler(request, exc):
-#     """Handle file too large errors"""
-#     return JSONResponse(
-#         status_code=413,
-#         content={
-#             "success": False,
-#             "error": "File too large",
-#             "message": "The uploaded file exceeds the maximum allowed size of 10MB"
-#         }
-#     )
-
-# # if __name__ == "__main__":
-# #     import uvicorn
-    
-# #     # Run the server
-# #     uvicorn.run(
-# #         "app:app",
-# #         host="0.0.0.0",
-# #         port=PORT,
-# #         reload=False,
-# #         log_level="info"
-# #     )
-
-
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, Header, Depends, File, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -242,7 +88,7 @@ class ResumeRequest(BaseModel):
 def home():
     return {"message": "Resume and Cover Letter Generator (Text Mode) is running!"}
 
-@app.post("/m1/generate/coverletter")
+@app.post("/m2/generate/coverletter")
 async def generate_coverletter(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -274,7 +120,7 @@ async def generate_coverletter(
     background_tasks.add_task(delayed_cleanup, pdf_path)
     return FileResponse(pdf_path, filename="cover_letter.pdf", media_type="application/pdf")
 
-@app.post("/m1/generate/resume")
+@app.post("/m2/generate/resume")
 async def generate_resume(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -318,7 +164,7 @@ async def generate_resume(
 
 #----------------------new----------------------------
 
-@app.post("/m1/extract-resume")
+@app.post("/m2/extract-resume")
 async def parse_resume_endpoint(file: UploadFile = File(...)):
     """
     Parse a resume file and extract structured information
