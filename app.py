@@ -1,21 +1,17 @@
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, Header, Depends, File, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-from generation.cover_letter_generator import CoverLetterGenerator
-from generation.cv_generator import CVGenerator
 from openai.prompt import build_cover_letter_prompt, build_resume_prompt
 from openai.openai_service import generate_text
-from openai.post_process import filter_skills
+from post_process.cl_post_process import format_data
+from post_process.cv_post_process import filter_skills
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-from generation.resume_data_extraction import ResumeExtracter
+from extraction.resume_data_extraction import ResumeExtracter
 import tempfile
 import threading
-import uuid
 import os
-import time
 import json
 import logging
 
@@ -43,23 +39,6 @@ def verify_token(authorization: str = Header(...)):
     if token != API_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# ---------------------- File Cleanup Utilities ----------------------
-
-def cleanup_file(filepath):
-    try:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-            print(f"Cleaned up file: {filepath}")
-    except Exception as e:
-        print(f"Error cleaning up file {filepath}: {str(e)}")
-
-def delayed_cleanup(filepath, delay=2):
-    def cleanup_task():
-        time.sleep(delay)
-        cleanup_file(filepath)
-    thread = threading.Thread(target=cleanup_task, daemon=True)
-    thread.start()
-
 # ---------------------- Queue Worker ----------------------
 
 def worker():
@@ -71,16 +50,6 @@ def worker():
             request_queue.task_done()
 
 threading.Thread(target=worker, daemon=True).start()
-
-# ---------------------- API Models ----------------------
-
-class CoverLetterRequest(BaseModel):
-    user_details: dict
-    job_details: dict
-
-class ResumeRequest(BaseModel):
-    user_details: dict
-    job_details: dict
 
 # ---------------------- Routes ----------------------
 
@@ -95,7 +64,6 @@ async def generate_coverletter(
     _: None = Depends(verify_token)
 ):
     data = await request.json()
-    filename = f"cover_letter_{uuid.uuid4().hex[:8]}.pdf"
     prompt_content = build_cover_letter_prompt(data)
     result = {}
 
@@ -113,12 +81,9 @@ async def generate_coverletter(
 
     paragraphs = result["content"].split("\n\n")
     data["paragraphs"] = paragraphs
+    final_data = format_data(data)
 
-    generator = CoverLetterGenerator()
-    pdf_path = generator.generate_cover_letter(data, output_filename=filename)
-
-    background_tasks.add_task(delayed_cleanup, pdf_path)
-    return FileResponse(pdf_path, filename="cover_letter.pdf", media_type="application/pdf")
+    return JSONResponse(final_data)
 
 @app.post("/m2/generate/resume")
 async def generate_resume(
@@ -127,7 +92,6 @@ async def generate_resume(
     _: None = Depends(verify_token)
 ):
     data = await request.json()
-    filename = f"resume_{uuid.uuid4().hex[:8]}.pdf"
     prompt_content = build_resume_prompt(data)
     result = {}
 
@@ -154,13 +118,7 @@ async def generate_resume(
     # Filter skills from parsed_content
     filtered_data = filter_skills(parsed_content, data['user_details'], data['job_description'])
 
-    data["content"] = filtered_data
-
-    generator = CVGenerator()
-    pdf_path = generator.generate_cv(data, filename=filename)
-
-    background_tasks.add_task(delayed_cleanup, pdf_path)
-    return FileResponse(pdf_path, filename="resume.pdf", media_type="application/pdf")
+    return JSONResponse(filtered_data)
 
 #----------------------new----------------------------
 

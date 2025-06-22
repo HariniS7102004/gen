@@ -4,7 +4,7 @@ uvicorn
 PyPDF2
 python-docx
 requests
-reportlab
 openai
 rapidfuzz
 python-multipart
+gensim
