@@ -1,3 +1,5 @@
+import json
+
 def build_cover_letter_prompt(data):
     user_keys = ["designation", "tools", "skills", "education", "experience_summary", "past_projects", "certifications","languages"]
     job_keys = ["job_title", "company", "link", "description", "responsibilities", "qualifications", "skills"]
@@ -50,3 +52,12 @@ The description for each experience_summary and project must be atleast 40-70 wo
 
 Details:
 {required_data}"""
+
+def translate_prompt(data, target_lang):
+    return f"""
+Translate the following JSON into {target_lang}. 
+Only translate the values — do not change the keys or the JSON structure. 
+Return the translated content as valid JSON in the same format.
+
+{json.dumps(data, indent=2)}
+"""

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, Header, Depends, File, UploadFile
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-from openai.prompt import build_cover_letter_prompt, build_resume_prompt
+from openai.prompt import build_cover_letter_prompt, build_resume_prompt, translate_prompt
 from openai.openai_service import generate_text
 from post_process.cl_post_process import format_data
 from post_process.cv_post_process import filter_skills
@@ -82,6 +82,27 @@ async def generate_coverletter(
     paragraphs = result["content"].split("\n\n")
     data["paragraphs"] = paragraphs
     final_data = format_data(data)
+    if data["cl_data"]["language"].lower()!="english":
+        prompt = translate_prompt(final_data, data["cl_data"]["language"])
+        def task():
+            try:
+                result["content"] = generate_text(prompt, OPENAI_API_KEY)
+            except Exception as e:
+                result["error"] = str(e)
+
+        request_queue.put((task, []))
+        request_queue.join()
+
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        
+        try:
+            final_data = json.loads(result["content"])
+        except json.JSONDecodeError:
+            return JSONResponse(status_code=500, content={
+                "error": "Failed to parse response as JSON",
+                "raw": result["content"]
+            })
 
     return JSONResponse(final_data)
 
@@ -117,6 +138,28 @@ async def generate_resume(
 
     # Filter skills from parsed_content
     filtered_data = filter_skills(parsed_content, data['user_details'], data['job_description'])
+
+    if data["cv_data"]["language"].lower()!="english":
+        prompt = translate_prompt(filtered_data, data["cv_data"]["language"])
+        def task():
+            try:
+                result["content"] = generate_text(prompt, OPENAI_API_KEY)
+            except Exception as e:
+                result["error"] = str(e)
+
+        request_queue.put((task, []))
+        request_queue.join()
+
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        
+        try:
+            filtered_data = json.loads(result["content"])
+        except json.JSONDecodeError:
+            return JSONResponse(status_code=500, content={
+                "error": "Failed to parse response as JSON",
+                "raw": result["content"]
+            })
 
     return JSONResponse(filtered_data)
 
