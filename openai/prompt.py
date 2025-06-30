@@ -9,6 +9,7 @@ def build_cover_letter_prompt(data):
     "job_description": {k: data["job_description"][k] for k in job_keys if k in data["job_description"]}
     }
     return f"""Generate a body within 150 words as 3 paragraphs for a formal cover letter using this data. Don't include the salutation or greetings. Don't include the skills explicitly. Don't include the heading as Cover Letter. Generate around 3 paragraphs for the body of the cover letter using the job description and user details, but don't include the company name.
+Don't start all the sentences with I am.
 Details:
 {required_data}
 Return only the formatted content as plain text for a .docx generation, but do NOT return any file or markdown."""
@@ -48,7 +49,7 @@ Return a valid JSON with the following structure:
   "skills": ["...", "..."]
 }}
 
-The description for each experience_summary and project must be atleast 40-70 words and the summary must be atleast 80 words relevant to the applying job. Ensure that each experience entry has a real company name (if provided in input), otherwise leave it blank. Make sure each field is properly filled based on the user input below. Do NOT return markdown or any additional explanation.
+The description for each experience_summary and project must be atleast 70-80 words and the summary must be atleast 80 words relevant to the applying job. Ensure that each experience entry has a real company name (if provided in input), otherwise leave it blank. Make sure each field is properly filled based on the user input below. Do NOT return markdown or any additional explanation.
 
 Details:
 {required_data}"""

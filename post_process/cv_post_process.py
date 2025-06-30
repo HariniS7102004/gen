@@ -1,5 +1,9 @@
 from rapidfuzz import fuzz
 import gensim.downloader as api
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load this once globally (or cache it if you want better performance)
 glove_model = api.load("glove-wiki-gigaword-50")  
@@ -69,6 +73,14 @@ def filter_skills(output_json, user_data, job_data, min_fuzzy_similarity=50, min
     return format_data(output_json, user_data)
 
 def format_data(ip_json, user_data):
+    for item in ip_json["experience_summary"]:
+        if isinstance(item["description"], str):
+            text = item["description"]
+            item["description"] = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
+    for item in ip_json["past_projects"]:
+        if isinstance(item["description"], str):
+            text = item["description"]
+            item["description"] = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
     data = {
     "personal_info": {
         "name": user_data["name"],
