@@ -8,3 +8,6 @@ openai
 rapidfuzz
 python-multipart
 gensim
+spacy
+phonenumbers
+email-validator

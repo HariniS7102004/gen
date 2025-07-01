@@ -10,6 +10,8 @@ COPY . /app
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN python -m spacy download en_core_web_sm
+
 # Expose the default port (optional: FastAPI can run on dynamic ports)
 # You can hardcode a default here or override using Docker run/env
 EXPOSE 8080

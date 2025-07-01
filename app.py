@@ -8,7 +8,7 @@ from post_process.cv_post_process import filter_skills
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-from extraction.resume_data_extraction import ResumeExtracter
+from extraction.resume_data_extraction import ResumeExtractor
 import tempfile
 import threading
 import os
@@ -173,7 +173,7 @@ async def parse_resume_endpoint(file: UploadFile = File(...)):
     Accepts: PDF, DOCX, TXT files
     Returns: JSON with parsed resume data
     """
-    resume_parser = ResumeExtracter()
+    resume_parser = ResumeExtractor()
     if not resume_parser:
         raise HTTPException(status_code=500, detail="Resume parser not initialized")
     
@@ -206,7 +206,7 @@ async def parse_resume_endpoint(file: UploadFile = File(...)):
         logger.info(f"Processing file: {file.filename} (size: {len(content)} bytes)")
         
         # Parse the resume
-        result = resume_parser.parse_resume(temp_file_path)
+        result = resume_parser.extract_resume_data(temp_file_path)
         
         # Clean up the temporary file
         os.unlink(temp_file_path)
