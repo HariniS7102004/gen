@@ -855,8 +855,6 @@ class ResumeExtractor:
             elif in_projects_section:
                 project_lines.append(line.strip())
         
-        print(project_lines)
-        
         # Parse project entries
         current_project = {}
         description_lines = []
@@ -961,9 +959,6 @@ class ResumeExtractor:
                 
                 # Skip the lines we've already processed
                 i = j - 1
-                
-                print("curr", current_project)
-                print("desc_lines", description_lines)
             
             i += 1
         

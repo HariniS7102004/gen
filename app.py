@@ -166,7 +166,9 @@ async def generate_resume(
 #----------------------new----------------------------
 
 @app.post("/m2/extract-resume")
-async def parse_resume_endpoint(file: UploadFile = File(...)):
+async def parse_resume_endpoint(
+    file: UploadFile = File(...),
+    _: None = Depends(verify_token)):
     """
     Parse a resume file and extract structured information
     
