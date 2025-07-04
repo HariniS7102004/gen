@@ -3,12 +3,14 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from openai.prompt import build_cover_letter_prompt, build_resume_prompt, translate_prompt
 from openai.openai_service import generate_text
-from post_process.cl_post_process import format_data
-from post_process.cv_post_process import filter_skills
+from process.cl_post_process import format_data
+from process.cv_post_process import filter_skills
+from process.preprocess import process_data
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-from extraction.resume_data_extraction import ResumeExtractor
+#from extraction.resume_data_extraction import ResumeExtractor
+from extraction.resume_data_extraction import TogetherResumeParser
 import tempfile
 import threading
 import os
@@ -83,7 +85,8 @@ async def generate_coverletter(
     data["paragraphs"] = paragraphs
     final_data = format_data(data)
     if data["cl_data"]["language"].lower()!="english":
-        prompt = translate_prompt(final_data, data["cl_data"]["language"])
+        level = data["cl_data"].get("level", "B1")
+        prompt = translate_prompt(final_data, data["cl_data"]["language"], level)
         def task():
             try:
                 result["content"] = generate_text(prompt, OPENAI_API_KEY)
@@ -112,7 +115,8 @@ async def generate_resume(
     background_tasks: BackgroundTasks,
     _: None = Depends(verify_token)
 ):
-    data = await request.json()
+    ip_data = await request.json()
+    data = process_data(ip_data)
     prompt_content = build_resume_prompt(data)
     result = {}
 
@@ -140,7 +144,8 @@ async def generate_resume(
     filtered_data = filter_skills(parsed_content, data['user_details'], data['job_description'])
 
     if data["cv_data"]["language"].lower()!="english":
-        prompt = translate_prompt(filtered_data, data["cv_data"]["language"])
+        level = data["cv_data"].get("level", "B1")
+        prompt = translate_prompt(filtered_data, data["cv_data"]["language"], level)
         def task():
             try:
                 result["content"] = generate_text(prompt, OPENAI_API_KEY)
@@ -175,7 +180,8 @@ async def parse_resume_endpoint(
     Accepts: PDF, DOCX, TXT files
     Returns: JSON with parsed resume data
     """
-    resume_parser = ResumeExtractor()
+    #resume_parser = ResumeExtractor()
+    resume_parser = TogetherResumeParser()
     if not resume_parser:
         raise HTTPException(status_code=500, detail="Resume parser not initialized")
     
@@ -208,7 +214,8 @@ async def parse_resume_endpoint(
         logger.info(f"Processing file: {file.filename} (size: {len(content)} bytes)")
         
         # Parse the resume
-        result = resume_parser.extract_resume_data(temp_file_path)
+        #result = resume_parser.extract_resume_data(temp_file_path)
+        result = resume_parser.parse_resume(temp_file_path)
         
         # Clean up the temporary file
         os.unlink(temp_file_path)
