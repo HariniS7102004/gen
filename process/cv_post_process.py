@@ -73,14 +73,14 @@ def filter_skills(output_json, user_data, job_data, min_fuzzy_similarity=50, min
     return format_data(output_json, user_data)
 
 def format_data(ip_json, user_data):
-    for item in ip_json["experience_summary"]:
-        if isinstance(item["description"], str):
-            text = item["description"]
-            item["description"] = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
-    for item in ip_json["past_projects"]:
-        if isinstance(item["description"], str):
-            text = item["description"]
-            item["description"] = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
+    # for item in ip_json["experience_summary"]:
+    #     if isinstance(item["description"], str):
+    #         text = item["description"]
+    #         item["description"] = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
+    # for item in ip_json["past_projects"]:
+    #     if isinstance(item["description"], str):
+    #         text = item["description"]
+    #         item["description"] = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
     data = {
     "personal_info": {
         "name": user_data["name"],
