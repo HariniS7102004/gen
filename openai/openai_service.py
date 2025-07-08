@@ -12,7 +12,7 @@ def generate_text(content, openai_api_key, model="gpt-3.5-turbo"):
         "messages": [
             {"role": "user", "content": content}
         ],
-        "temperature": 0.9
+        "temperature": 0.8
     }
 
     response = requests.post(url, headers=headers, json=data).json()

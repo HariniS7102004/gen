@@ -25,12 +25,13 @@ def build_resume_prompt(data):
     return f"""Generate structured JSON content for a professional resume based on the following user details and job description. Do not include company names. Don't include the word Resume in it. Give terms instead of sentences for skills and arrange them based on job requirement. Don't include any skills that is not present in user data.
 Return past projects and experience summary data only if there is data for that in the input. Otherwise leave it blank.
 Avoid repeating verbs or phrases (e.g., "developed", "implemented", "responsible for") more than twice in total. Use a wide vocabulary — apply varied, precise action verbs and phrasing throughout. Each entry must use a **unique set of verbs** and sentence structure.
-Every experience and past project description must include **at least two quantitative metrics**, even if not provided in the input. You may reasonably infer them based on job context.
+Every experience description must contain **three quantitative metrics**, even if not provided in the input. Always include 3 different, realistic, inferred quantitative metrics in every description entry, even if the input lacks numbers. These must be embedded naturally in each bullet point.
 
 For example:
 - “Led a team of 6 engineers and increased processing speed by 35%.”
 - “Managed budgets up to $150K across 3 projects in 12 months.”
 - “Reduced bug count by 42% through automation.”
+- “Increased accuracy by 10%.”
 
 Use **different metrics** each time — avoid repeating the same phrasing or numbers across entries but include it for sure.
 Return a valid JSON with the following structure:
@@ -60,7 +61,7 @@ Return a valid JSON with the following structure:
 }}
 
 The description for each experience_summary and project must be atleast 3-4 points with 70-80 words and the summary must be atleast 80 words relevant to the applying job. Ensure that each experience entry has a real company name (if provided in input), otherwise leave it blank. Make sure each field is properly filled based on the user input below. Do NOT return markdown or any additional explanation.
-
+Generate everything in US English.
 Details:
 {required_data}"""
 

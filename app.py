@@ -144,7 +144,13 @@ async def generate_resume(
     filtered_data = filter_skills(parsed_content, data['user_details'], data['job_description'])
 
     if data["cv_data"]["language"].lower()!="english":
-        level = data["cv_data"].get("level", "B1")
+        ip_level = data["cv_data"].get("level", "B1-B2")
+        if ip_level.lower() in ["basic", "beginner", "elementary", "a1", "a2"]:
+            level = "A1-A2"
+        elif ip_level.lower() in ["fluent", "proficient", "advanced", "native", "c1", "c2"]:
+            level = "C1-C2"
+        else:
+            level = "B1-B2"
         prompt = translate_prompt(filtered_data, data["cv_data"]["language"], level)
         def task():
             try:

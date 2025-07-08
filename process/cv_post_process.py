@@ -1,6 +1,8 @@
 from rapidfuzz import fuzz
 import gensim.downloader as api
 import logging
+import re
+from typing import List, Dict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -99,4 +101,38 @@ def format_data(ip_json, user_data):
     "certifications": user_data["certifications"],
     "skills": ip_json["skills"],
     }
-    return data
+    final_data = process_resume_json(data)
+    logger.info(final_data)
+    return final_data
+
+def has_quantitative_data(text: str) -> bool:
+    """Check if a string contains numeric or percentage-based data."""
+    #return bool(re.search(r'\d+[%$KkMm]|(?:\d+\s*(?:projects?|bugs?|users?|clients?|months?|years?|tasks?))', text, re.IGNORECASE))
+    return bool(re.search(r'\d+', text))
+
+
+def choose_metric_by_keyword(text: str) -> str:
+    """Choose a metric based on the presence of specific keywords."""
+    lower_text = text.lower()
+    if "client" in lower_text or "user" in lower_text:
+        return "Increased client satisfaction by 20%."
+    else:
+        # default fallback
+        return "Increased accuracy by 15%."
+
+def inject_metrics(description_list: List[str]) -> List[str]:
+    """Inject a quantitative metric if none exist in the description."""
+    if not any(has_quantitative_data(desc) for desc in description_list):
+        combined_text = " ".join(description_list)
+        metric = choose_metric_by_keyword(combined_text)
+        description_list.append(metric)
+    return description_list
+
+def process_resume_json(resume_data: Dict) -> Dict:
+    """Process the resume JSON to ensure every description has quantitative data."""
+    for section in ["work_experience", "projects"]:
+        if section in resume_data:
+            for entry in resume_data[section]:
+                if "description" in entry and isinstance(entry["description"], list):
+                    entry["description"] = inject_metrics(entry["description"])
+    return resume_data
