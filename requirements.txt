@@ -8,3 +8,6 @@ openai
 rapidfuzz
 python-multipart
 gensim
+pydantic
+beautifulsoup4
+summa
