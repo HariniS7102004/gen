@@ -269,7 +269,7 @@ async def request_entity_too_large_handler(request, exc):
         }
     )
 
-@app.post("/generate/job-research")
+@app.post("/m2/generate/job-research")
 async def generate_guide_endpoint(request: Request):
     # if not request.company or not request.job_title or not request.candidate_profile or not request.job_description:
     #     raise HTTPException(status_code=400, detail="Missing required fields")
